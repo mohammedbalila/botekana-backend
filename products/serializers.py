@@ -1,3 +1,4 @@
+from datetime import datetime
 from rest_framework import serializers
 
 from . import models
@@ -24,6 +25,7 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
     colors = serializers.SerializerMethodField()
     colors_ar = serializers.SerializerMethodField()
     images = ImageSerializer(many=True)
+    discounts = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Product
@@ -37,6 +39,10 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_colors_ar(self, obj):
         return obj.colors_ar.split(',')
+
+    def get_discounts(self, obj):
+        objs = obj.discounts.filter(finish_date__gt=datetime.now())
+        return DiscountSerializer(objs, many=True).data
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):

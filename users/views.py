@@ -93,7 +93,17 @@ class CartEditView(generics.RetrieveUpdateDestroyAPIView):
     patch:
         ### Edit cart content.
     delete:
-        ### Cancel or finish cart.
+        ### Cancel cart.
+    """
+    permission_classes = [IsOwner]
+    serializer_class = serializers.CartSerializer
+    queryset = models.Cart.objects.all()
+
+
+class CartFinishView(generics.DestroyAPIView):
+    """
+    delete:
+        ### Finish cart.
     """
     permission_classes = [IsOwner]
     serializer_class = serializers.CartSerializer
