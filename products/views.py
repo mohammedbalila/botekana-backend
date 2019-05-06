@@ -114,3 +114,29 @@ class SubCategoryEditView(generics.RetrieveUpdateDestroyAPIView):
     """
     serializer_class = serializers.SubCategorySerializer
     queryset = models.SubCategory.objects.all()
+
+
+class DiscountListView(generics.ListCreateAPIView):
+    """
+    get:
+        ### List dicounts.
+    post:
+        ### Create new discount.
+    """
+    serializer_class = serializers.DiscountSerializer
+    queryset = models.Discount.objects.all()
+
+
+class DiscountEditView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    get:
+        ### Retrieve discount info.
+    put:
+        ### Edit discount info.
+    patch:
+        ### Edit discount info.
+    delete:
+        ### Delete discount.
+    """
+    serializer_class = serializers.DiscountSerializer
+    queryset = models.Discount.objects.all()

@@ -109,3 +109,18 @@ class Image(models.Model):
     product = models.ForeignKey(Product, models.CASCADE, related_name="images",
                                 related_query_name="images",
                                 verbose_name=_("product"))
+
+    def __str__(self):
+        return "%s-%d" % (self.product.name, self.id)
+
+
+class Discount(models.Model):
+    product = models.ForeignKey(Product, models.CASCADE,
+                                related_name="discounts",
+                                related_query_name="discounts",
+                                verbose_name=_("product"))
+    finish_date = models.DateField(_("finish date"))
+    percentage = models.PositiveSmallIntegerField(_("percentage"))
+
+    class Meta:
+        unique_together = ['product', 'finish_date', 'percentage']

@@ -3,6 +3,12 @@ from rest_framework import serializers
 from . import models
 
 
+class DiscountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Discount
+        fields = '__all__'
+
+
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Image
@@ -10,6 +16,7 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.IntegerField(read_only=True)
     brand = serializers.StringRelatedField()
     category = serializers.PrimaryKeyRelatedField(read_only=True)
     sub_category = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -33,6 +40,8 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):
+    images = ImageSerializer(many=True, read_only=True)
+
     class Meta:
         model = models.Product
         fields = '__all__'
@@ -48,18 +57,24 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
 
 class BrandSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = models.Brand
         fields = '__all__'
 
 
 class SubCategorySerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = models.SubCategory
         fields = '__all__'
 
 
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = models.Category
         fields = '__all__'

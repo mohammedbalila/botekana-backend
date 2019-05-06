@@ -28,7 +28,7 @@ class Cart(models.Model):
     zip_code = models.PositiveIntegerField(
         _("zip code"), blank=True, null=True)
     payment_method = models.CharField(_("payment method"), max_length=2,
-                                      choices=[('C', 'Cash'), ('V', 'Visa')],
+                                      choices=[('c', 'Cash'), ('v', 'Visa')],
                                       blank=True, null=True)
 
     class Meta:
@@ -47,7 +47,7 @@ class CartItem(models.Model):
     price = models.FloatField(_("price"))
 
     def __str__(self):
-        return "%s" % self.product.name
+        return self.product.name
 
 
 class WishlistItem(models.Model):
@@ -61,6 +61,9 @@ class WishlistItem(models.Model):
     class Meta:
         ordering = ['date_added']
         unique_together = ['user', 'product']
+
+    def __str__(self):
+        return self.product.name
 
 
 class Feedback(models.Model):

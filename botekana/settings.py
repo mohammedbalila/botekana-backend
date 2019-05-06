@@ -86,6 +86,10 @@ JWT_AUTH = {
     # 'JWT_GET_USER_SECRET_KEY': 'users.models.get_jwt_secret_key'
 }
 
+REST_AUTH_SERIALIZERS = {
+    'USER_DETAILS_SERIALIZER': 'users.serializers.UserSerializer'
+}
+
 
 AUTH_USER_MODEL = 'users.User'
 
