@@ -73,7 +73,7 @@ def jwt_decode_handler(token):
     )
 
 
-def get_custom_jwt(user, device):
+def get_custom_jwt(user):
     """
     Helper to generate a JWT for a validated OTP device.
     This resets the orig_iat timestamp, as we've re-validated the user.

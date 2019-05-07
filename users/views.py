@@ -5,7 +5,8 @@ from rest_framework import generics, permissions, status, exceptions
 from rest_framework.response import Response
 
 from . import models, serializers
-from .permissions import IsUserOrReadOnly, IsUser, IsOwner
+from .permissions import (IsUserOrReadOnly, IsUser,
+                          IsOwner, IsOwnerOrAdminReadOnly)
 
 
 class UserListView(generics.ListAPIView):
@@ -46,6 +47,8 @@ class WishlistEditView(generics.ListCreateAPIView):
     serializer_class = serializers.WishlistItemSerializer
 
     def get_queryset(self):
+        if self.kwargs.get('pk'):
+            return models.WishlistItem.objects.filter(user=self.kwargs['pk'])
         return models.WishlistItem.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
@@ -71,10 +74,15 @@ class CartListView(generics.ListCreateAPIView):
     """
     get:
         ### List all carts. `Authenticated users only`
+    post:
+        ### Create new cart. `Authenticated users only`
     """
-    # permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
+        if self.kwargs.get('pk'):
+            return models.Cart.objects.filter(user=self.kwargs['pk'],
+                                              is_active=True)
         return models.Cart.objects.filter(user=self.request.user,
                                           is_active=True)
 
@@ -95,7 +103,7 @@ class CartEditView(generics.RetrieveUpdateDestroyAPIView):
     delete:
         ### Cancel cart.
     """
-    permission_classes = [IsOwner]
+    permission_classes = [IsOwnerOrAdminReadOnly]
     serializer_class = serializers.CartSerializer
     queryset = models.Cart.objects.all()
 
@@ -124,6 +132,9 @@ class CartHistoryView(generics.ListAPIView):
     serializer_class = serializers.CartSerializer
 
     def get_queryset(self):
+        if self.kwargs.get('pk'):
+            return models.Cart.objects.filter(user=self.kwargs['pk'],
+                                              date_finished__isnull=True)
         return models.Cart.objects.filter(user=self.request.user)\
             .exclude(date_finished__isnull=True)
 
@@ -133,8 +144,8 @@ class CartItemCreateView(generics.CreateAPIView):
     post:
         ### Create new cart item.
     """
-    # permission_classes = [permissions.IsAuthenticated]
-    serializer_class = serializers.CartItemSerializer
+    # permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    serializer_class = serializers.CartItemCreateSerializer
     queryset = models.CartItem.objects.all()
 
 
@@ -149,7 +160,7 @@ class CartItemEditView(generics.RetrieveUpdateDestroyAPIView):
     delete:
         ### Delete cart item.
     """
-    # permission_classes = [IsOwner]
+    permission_classes = [IsOwner]
     serializer_class = serializers.CartItemSerializer
     queryset = models.CartItem.objects.all()
 

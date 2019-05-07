@@ -7,12 +7,12 @@ from products.serializers import ProductSerializer
 class CartItemCreateSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
     product_id = serializers.IntegerField(write_only=True)
+    cart = serializers.PrimaryKeyRelatedField(
+        queryset=models.Cart.objects.all())
 
     class Meta:
         model = models.CartItem
         fields = '__all__'
-        read_only_fields = ['price']
-        write_only_fields = ['cart']
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -22,7 +22,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CartItem
         fields = '__all__'
-        read_only_fields = ['price', 'cart']
+        read_only_fields = ['cart']
 
 
 class CartSerializer(serializers.ModelSerializer):

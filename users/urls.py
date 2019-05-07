@@ -6,6 +6,11 @@ from . import views
 urlpatterns = [
     path("", views.UserListView.as_view(), name="user-list"),
     path("<int:pk>/", views.UserEditView.as_view(), name="user-details"),
+    path("<int:pk>/carts/", views.CartListView.as_view(), name="user-carts"),
+    path("<int:pk>/carts/history/",
+         views.CartHistoryView.as_view(), name="user-cart-history"),
+    path("<int:pk>/wishlist/", views.WishlistEditView.as_view(),
+         name="user-wishlist"),
     path("carts/", views.CartListView.as_view(), name="cart-list"),
     path("carts/<int:pk>/", views.CartEditView.as_view(),
          name="cart-detail"),
