@@ -90,6 +90,8 @@ REST_AUTH_SERIALIZERS = {
     'USER_DETAILS_SERIALIZER': 'users.serializers.UserSerializer'
 }
 
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+
 
 AUTH_USER_MODEL = 'users.User'
 

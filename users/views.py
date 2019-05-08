@@ -6,7 +6,8 @@ from rest_framework.response import Response
 
 from . import models, serializers
 from .permissions import (IsUserOrReadOnly, IsUser,
-                          IsOwner, IsOwnerOrAdminReadOnly)
+                          IsOwner, IsOwnerOrAdminReadOnly,
+                          IsUserOrAdminReadOnly)
 
 
 class UserListView(generics.ListAPIView):
