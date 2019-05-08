@@ -70,6 +70,15 @@ class BrandSerializer(serializers.HyperlinkedModelSerializer):
         fields = '__all__'
 
 
+class BrandEditSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    products = ProductSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = models.Brand
+        fields = '__all__'
+
+
 class SubCategorySerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
 
@@ -78,8 +87,26 @@ class SubCategorySerializer(serializers.HyperlinkedModelSerializer):
         fields = '__all__'
 
 
+class SubCategoryEditSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    products = ProductSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = models.SubCategory
+        fields = '__all__'
+
+
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = models.Category
+        fields = '__all__'
+
+
+class CategoryEditSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    products = ProductSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.Category

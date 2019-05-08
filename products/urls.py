@@ -6,6 +6,8 @@ from . import views
 urlpatterns = [
     path("", views.ProductListView.as_view(), name="product-list"),
     path("<int:pk>/", views.ProductEditView.as_view(), name="product-detail"),
+    path("has_discount/", views.DiscountedProductListView.as_view(),
+         name="discountedproducts-list"),
     path("categories/", views.CategoryListView.as_view(),
          name="category-list"),
     path("categories/<int:pk>/", views.CategoryEditView.as_view(),

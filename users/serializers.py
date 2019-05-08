@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_auth.registration.serializers import RegisterSerializer
 
 from . import models
 from products.serializers import ProductSerializer
@@ -108,7 +109,33 @@ class FeedbackSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = models.User
         fields = ['id', 'username', 'first_name',
                   'last_name', 'email', 'phone']
+
+
+class UserRegisterSerializer(RegisterSerializer):
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    phone = serializers.CharField()
+
+    class Meta:
+        model = models.User
+        fields = ['id', 'username', 'first_name',
+                  'last_name', 'email', 'phone']
+
+    def get_cleaned_data(self):
+        return {
+            'username': self.validated_data.get('username', ''),
+            'email': self.validated_data.get('email', ''),
+            'password1': self.validated_data.get('password1', ''),
+            'first_name': self.validated_data.get('first_name', ''),
+            'last_name': self.validated_data.get('last_name', ''),
+            'phone': self.validated_data.get('phone', ''),
+        }
+
+    def custom_signup(self, request, user):
+        user.phone = self.validated_data.get('phone')
+        user.save()

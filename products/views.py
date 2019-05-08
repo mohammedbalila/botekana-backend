@@ -1,3 +1,4 @@
+from datetime import datetime
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
@@ -38,6 +39,19 @@ class ProductEditView(generics.RetrieveUpdateDestroyAPIView):
         return serializers.ProductCreateSerializer
 
 
+class DiscountedProductListView(generics.ListAPIView):
+    """
+    get:
+        ### List discounted products.
+    """
+    serializer_class = serializers.ProductSerializer
+
+    def get_queryset(self):
+        return models.Product.objects.filter(
+            discounts__finish_date__gt=datetime.now()
+        )
+
+
 class BrandListView(generics.ListCreateAPIView):
     """
     get:
@@ -60,7 +74,7 @@ class BrandEditView(generics.RetrieveUpdateDestroyAPIView):
     delete:
         ### Delete brand.
     """
-    serializer_class = serializers.BrandSerializer
+    serializer_class = serializers.BrandEditSerializer
     queryset = models.Brand.objects.all()
 
 
@@ -86,7 +100,7 @@ class CategoryEditView(generics.RetrieveUpdateDestroyAPIView):
     delete:
         ### Delete category.
     """
-    serializer_class = serializers.CategorySerializer
+    serializer_class = serializers.CategoryEditSerializer
     queryset = models.Category.objects.all()
 
 
@@ -112,7 +126,7 @@ class SubCategoryEditView(generics.RetrieveUpdateDestroyAPIView):
     delete:
         ### Delete sub category.
     """
-    serializer_class = serializers.SubCategorySerializer
+    serializer_class = serializers.SubCategoryEditSerializer
     queryset = models.SubCategory.objects.all()
 
 
