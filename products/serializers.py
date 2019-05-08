@@ -19,7 +19,8 @@ class ImageSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
     brand = serializers.PrimaryKeyRelatedField(read_only=True)
-    brand_name = serializers.CharField(read_only=True)
+    brand_name = serializers.StringRelatedField(
+        read_only=True, source='brand')
     category = serializers.PrimaryKeyRelatedField(read_only=True)
     sub_category = serializers.PrimaryKeyRelatedField(read_only=True)
     sizes = serializers.SerializerMethodField()
