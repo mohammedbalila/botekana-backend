@@ -61,7 +61,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'botekana.urls'
@@ -101,8 +101,7 @@ AUTH_USER_MODEL = 'users.User'
 
 
 # CORS settings
-CORS_ORIGIN_WHITELIST = ['http://doctorsbooking.net']
-# CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = True
 
 
 TEMPLATES = [
