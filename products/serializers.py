@@ -28,6 +28,7 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
     colors_ar = serializers.SerializerMethodField()
     images = ImageSerializer(many=True)
     discounts = serializers.SerializerMethodField()
+    in_wishlist = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Product
@@ -45,6 +46,12 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
     def get_discounts(self, obj):
         objs = obj.discounts.filter(finish_date__gt=datetime.now())
         return DiscountSerializer(objs, many=True).data
+
+    def get_in_wishlist(self, obj):
+        user = self.context.get('view').request.user
+        if not user.is_authenticated:
+            return False
+        return bool(obj.wishlist_items.filter(user=user))
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):

@@ -51,11 +51,15 @@ class CartItem(models.Model):
 
 
 class WishlistItem(models.Model):
-    user = models.ForeignKey(User, models.CASCADE, related_name="wishlist_items",
+    user = models.ForeignKey(User, models.CASCADE,
+                             related_name="wishlist_items",
                              related_query_name="wishlist_items",
                              verbose_name=_("user"))
     product = models.ForeignKey(
-        Product, models.CASCADE, verbose_name=_("product"))
+        Product, models.CASCADE,
+        related_name='wishlist_items',
+        related_query_name='wishlist_items',
+        verbose_name=_("product"))
     date_added = models.DateTimeField(_("date added"), auto_now_add=True)
 
     class Meta:

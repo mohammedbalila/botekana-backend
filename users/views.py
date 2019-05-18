@@ -60,7 +60,8 @@ class WishlistEditView(generics.ListCreateAPIView):
             return super().post(request, *args, **kwargs)
         except IntegrityError:
             raise exceptions.ValidationError(
-                {'details': "Product is already in wishlist"})
+                {'details':
+                 "Product does not exist or is already in wishlist"})
 
     def delete(self, request, *args, **kwargs):
         try:
