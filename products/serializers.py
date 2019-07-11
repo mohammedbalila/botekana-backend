@@ -62,7 +62,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
-        files = self.context.get('view').request.FILES
+        files = self.context.get('request').FILES
         files.pop('image')
         product = models.Product.objects.create(**validated_data)
 

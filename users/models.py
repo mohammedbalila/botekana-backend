@@ -18,8 +18,8 @@ class Cart(models.Model):
     user = models.ForeignKey(User, models.CASCADE, related_name="carts",
                              related_query_name="carts",
                              verbose_name=_("user"))
-    date_added = models.DateTimeField(_("date added"), auto_now_add=True)
-    is_active = models.BooleanField(_("is active"), default=True)
+    date_added = models.DateTimeField(_("date added"), blank=True, null=True)
+    is_active = models.BooleanField(_("is active"), default=False)
     date_finished = models.DateTimeField(
         _("date finished"), blank=True, null=True)
     country = models.CharField(
@@ -30,6 +30,7 @@ class Cart(models.Model):
     payment_method = models.CharField(_("payment method"), max_length=2,
                                       choices=[('c', 'Cash'), ('v', 'Visa')],
                                       blank=True, null=True)
+    payment_status = models.BooleanField(_('payment status'), default=False)
 
     class Meta:
         ordering = ['date_added']

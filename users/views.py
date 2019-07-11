@@ -1,7 +1,10 @@
 from datetime import datetime
 
-from django.db import IntegrityError
-from rest_framework import generics, permissions, status, exceptions
+from django.db import IntegrityError, transaction
+from django.shortcuts import get_object_or_404, Http404
+from django_filters import rest_framework
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics, permissions, status, exceptions, filters
 from rest_framework.response import Response
 
 from . import models, serializers
@@ -15,6 +18,8 @@ class UserListView(generics.ListAPIView):
     get:
         ### Retrieve list of users.
     """
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['username', 'first_name', 'last_name', 'email', 'phone']
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_active=True)
 
@@ -65,14 +70,50 @@ class WishlistEditView(generics.ListCreateAPIView):
 
     def delete(self, request, *args, **kwargs):
         try:
-            models.WishlistItem.objects.get(pk=request.data['pk']).delete()
+            get_object_or_404(self.get_queryset(),
+                              pk=request.data['pk']).delete()
             return Response({'success': True}, status.HTTP_200_OK)
         except Exception as e:
             return Response({'success': False, 'info': e.__str__()},
                             status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class CartListView(generics.ListCreateAPIView):
+class CartFilter(rest_framework.FilterSet):
+    added_before = rest_framework.DateFilter(field_name='date_added',
+                                             lookup_expr='lte')
+    added_after = rest_framework.DateFilter(field_name='date_added',
+                                            lookup_expr='gte')
+    finished_before = rest_framework.DateFilter(field_name='date_finished',
+                                                lookup_expr='lte')
+    finished_after = rest_framework.DateFilter(field_name='date_finished',
+                                               lookup_expr='gte')
+    is_not_submitted = rest_framework.BooleanFilter(field_name='date_added',
+                                                    lookup_expr='isnull')
+    is_not_finished = rest_framework.BooleanFilter(field_name='date_finished',
+                                                   lookup_expr='isnull')
+
+    class Meta:
+        model = models.Cart
+        fields = ['is_active', 'payment_method', 'country',
+                  'zip_code', 'is_not_submitted', 'is_not_finished',
+                  'added_before', 'added_after',
+                  'finished_before', 'finished_after']
+
+
+class CartListView(generics.ListAPIView):
+    """
+    get:
+        ### List all carts. `Admin users only`
+    """
+    # permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = models.Cart.objects.all()
+    serializer_class = serializers.CartSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ['address', 'country']
+    filterset_class = CartFilter
+
+
+class UserCartListView(generics.ListCreateAPIView):
     """
     get:
         ### List all carts. `Authenticated users only`
@@ -80,13 +121,11 @@ class CartListView(generics.ListCreateAPIView):
         ### Create new cart. `Authenticated users only`
     """
     # permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = CartFilter
 
     def get_queryset(self):
-        if self.kwargs.get('pk'):
-            return models.Cart.objects.filter(user=self.kwargs['pk'],
-                                              is_active=True)
-        return models.Cart.objects.filter(user=self.request.user,
-                                          is_active=True)
+        return models.Cart.objects.filter(user=self.kwargs['pk'])
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -110,35 +149,64 @@ class CartEditView(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.Cart.objects.all()
 
 
-class CartFinishView(generics.DestroyAPIView):
-    """
-    delete:
-        ### Finish cart.
-    """
-    permission_classes = [IsOwner]
-    serializer_class = serializers.CartSerializer
-    queryset = models.Cart.objects.all()
-
-    def perform_destroy(self, instance):
-        instance.date_finished = datetime.now()
-        instance.is_active = False
-        instance.save()
-
-
-class CartHistoryView(generics.ListAPIView):
+class CartFinishView(generics.views.APIView):
     """
     get:
-        ### View finished and cancelled carts.
+        ### Submit Cart.
+    post:
+        ### Finish Cart.
     """
-    # permission_classes = [permissions.IsAuthenticated]
-    serializer_class = serializers.CartSerializer
+    permission_classes = [IsOwner]
+    queryset = models.Cart.objects.all()
 
-    def get_queryset(self):
-        if self.kwargs.get('pk'):
-            return models.Cart.objects.filter(user=self.kwargs['pk'],
-                                              date_finished__isnull=True)
-        return models.Cart.objects.filter(user=self.request.user)\
-            .exclude(date_finished__isnull=True)
+    def get(self, request, *args, **kwargs):
+        try:
+            cart = get_object_or_404(self.queryset, pk=kwargs['pk'])
+            # Make sure the cart is not submitted already.
+            if cart.date_added:
+                raise Exception("Cart already submitted")
+
+            # Get the products in the cart
+            products = models.Product.objects.select_for_update().filter(
+                cartitem__cart=cart)
+
+            with transaction.atomic():
+                # Validate order.
+                for product in products:
+                    # Calculate the new quantity
+                    product.quantity -= cart.items.get(product=product)\
+                        .quantity
+                    # Check if there's enough quantity for the order
+                    if product.quantity < 0:
+                        raise Exception(
+                            "Not enough quantity for {0};"
+                            "كمية غير كافية للمنتج {0}".format(product))
+                # Save the new quantities.
+                for product in products:
+                    product.save()
+                # Update cart.
+                cart.date_added = datetime.now()
+                cart.save()
+
+            return Response({'success': True}, status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'success': False,
+                             'details': e.__str__()},
+                            status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            cart = get_object_or_404(self.queryset, pk=kwargs['pk'])
+            if not cart.is_active:
+                raise Exception("Cart already finished")
+            cart.date_finished = datetime.now()
+            cart.is_active = False
+            cart.save()
+            return Response({'success': True}, status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'success': False,
+                             'details': e.__str__()},
+                            status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CartItemCreateView(generics.CreateAPIView):
@@ -174,13 +242,15 @@ class CartItemEditView(generics.RetrieveUpdateDestroyAPIView):
         serializer.save(price=price)
 
 
-class FeedbackSubmitView(generics.CreateAPIView):
+class FeedbackListView(generics.ListCreateAPIView):
     """
+    get:
+        ### List feedbacks.
     post:
         ### Submit feedback.
     """
     serializer_class = serializers.FeedbackSerializer
     queryset = models.Feedback.objects.all()
-
-    def perform_create(self, serializer):
-        serializer.save()
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['message']
+    filterset_fields = ['email', 'date_added']

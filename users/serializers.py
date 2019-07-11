@@ -7,7 +7,7 @@ from products.serializers import ProductSerializer
 
 class CartItemCreateSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
-    product_id = serializers.IntegerField(write_only=True)
+    id = serializers.IntegerField(source='product_id', write_only=True)
     cart = serializers.PrimaryKeyRelatedField(
         queryset=models.Cart.objects.all())
 
@@ -18,7 +18,7 @@ class CartItemCreateSerializer(serializers.ModelSerializer):
 
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
-    product_id = serializers.IntegerField(write_only=True)
+    id = serializers.IntegerField(source='product_id', write_only=True)
 
     class Meta:
         model = models.CartItem
@@ -26,13 +26,58 @@ class CartItemSerializer(serializers.ModelSerializer):
         read_only_fields = ['cart']
 
 
+class CartItemReportSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='cart.id')
+    product = serializers.StringRelatedField()
+    user = serializers.ReadOnlyField(source='cart.user.id')
+    user_name = serializers.StringRelatedField(source='cart.user')
+    date_added = serializers.ReadOnlyField(source='cart.date_added')
+
+    class Meta:
+        model = models.CartItem
+        exclude = ['cart']
+
+
+class CartReportSerializer(serializers.ModelSerializer):
+    items = serializers.SerializerMethodField()
+    user = serializers.StringRelatedField()
+    deliverer = serializers.StringRelatedField()
+    date_added = serializers.SerializerMethodField()
+    date_finished = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Cart
+        exclude = ['is_active']
+        read_only_fields = ['address', 'zip_code',
+                            'payment_method', 'payment_status']
+
+    def get_items(self, obj):
+        items = []
+        for item in obj.items.all():
+            items.append(item.product.name_ar)
+        return ','.join(items)
+
+    def get_date_added(self, obj):
+        return obj.date_added.strftime("%Y-%m-%d %H:%M")
+
+    def get_date_finished(self, obj):
+        if obj.date_finished:
+            return obj.date_finished.strftime("%Y-%m-%d %H:%M")
+        return None
+
+
 class CartSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    user_phone = serializers.CharField(source='user.phone', read_only=True)
     items = CartItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.Cart
         fields = '__all__'
         read_only_fields = ['user', 'is_active', 'date_finished']
+
+    def get_user_name(self, obj):
+        return "%s %s" % (obj.user.first_name, obj.user.last_name)
 
 
 class CartCreateSerializer(serializers.ModelSerializer):
@@ -45,7 +90,7 @@ class CartCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # Get the request object
-        request = self.context.get('view').request
+        request = self.context.get('request')
         # Cart items
         cart_items = validated_data.pop('items')
         # Create a cart first
@@ -55,11 +100,19 @@ class CartCreateSerializer(serializers.ModelSerializer):
             try:
                 product = models.Product.objects.get(
                     id=cart_item['product_id'])
+
+                # Validate that the color and size of the product are available
                 if cart_item['color'] not in product.colors.split(',') or \
                         str(cart_item['size']) not in product.sizes.split(','):
                     raise serializers.ValidationError(
                         {'details': "Color or size not available"})
-                price = product.price * float(cart_item['quantity'])
+
+                # Check if the price is supplied from the client side
+                if cart_item.get('price'):
+                    price = cart_item.get('price')
+                # Else, calculate the price manually.
+                else:
+                    price = product.price * float(cart_item['quantity'])
                 models.CartItem.objects.create(
                     **cart_item, price=price, cart=cart)
             except models.Product.DoesNotExist:
@@ -67,30 +120,6 @@ class CartCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {'details': "Product does not exist"})
         return cart
-
-    # def update(self, instance, validated_data):
-    #     # Get the request object
-    #     request = self.context.get('view').request
-    #     # Cart items
-    #     cart_items = validated_data.pop('items')
-    #     for key, value in validated_data.items():
-    #         setattr(instance, key, value)
-
-    #     for cart_item in cart_items:
-    #         try:
-    #             product = cart_item['product']
-    #             if cart_item['color'] not in product.colors.split(',') or \
-    #                     str(cart_item['size']) not in product.sizes.split(','):
-    #                 raise serializers.ValidationError(
-    #                     {'details': "Colors or size not available"})
-    #             price = product.price * float(cart_item['quantity'])
-    #             models.CartItem.objects.filter(
-    #                 id=cart_item.pop('id')).update(**cart_item)
-    #         except models.Product.DoesNotExist:
-    #             raise serializers.ValidationError(
-    #                 {'details': "Product does not exist"})
-    #     instance.save()
-    #     return instance
 
 
 class WishlistItemSerializer(serializers.ModelSerializer):

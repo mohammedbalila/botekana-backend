@@ -1,8 +1,11 @@
 from datetime import datetime
-from rest_framework import generics, permissions, status
+
+from django_filters import rest_framework
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics, permissions, status, filters
 from rest_framework.response import Response
 
-from . import serializers, models
+from . import serializers, models, filters as custom_filters
 
 
 class ProductListView(generics.ListCreateAPIView):
@@ -12,6 +15,10 @@ class ProductListView(generics.ListCreateAPIView):
     post:
         ### Create new product.
     """
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['name', 'name_ar', 'description', 'description_ar',
+                     'brand__name', 'sku']
+    filter_class = custom_filters.ProductFilter
     queryset = models.Product.objects.all()
 
     def get_serializer_class(self):
