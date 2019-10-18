@@ -24,6 +24,11 @@ class Cart(models.Model):
         _("date finished"), blank=True, null=True)
     country = models.CharField(
         _("country"), max_length=50, blank=True, null=True)
+    city = models.CharField(_("city"), max_length=50, blank=True, null=True)
+    region = models.CharField(
+        _("region"), max_length=50, blank=True, null=True)
+    neighbourhood = models.CharField(
+        _("neighbourhood"), max_length=50, blank=True, null=True)
     address = models.TextField(_("address"), blank=True, null=True)
     zip_code = models.PositiveIntegerField(
         _("zip code"), blank=True, null=True)

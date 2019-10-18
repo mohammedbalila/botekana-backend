@@ -22,12 +22,17 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
     brand_name = serializers.StringRelatedField(
         read_only=True, source='brand')
     category = serializers.PrimaryKeyRelatedField(read_only=True)
+    category_name = serializers.CharField(
+        source='category.name', read_only=True)
     sub_category = serializers.PrimaryKeyRelatedField(read_only=True)
+    sub_category_name = serializers.CharField(
+        source='sub_category.name', read_only=True)
     sizes = serializers.SerializerMethodField()
     colors = serializers.SerializerMethodField()
     colors_ar = serializers.SerializerMethodField()
     images = ImageSerializer(many=True)
     discounts = serializers.SerializerMethodField()
+    # wishlist_id = serializers.SerializerMethodField()
     in_wishlist = serializers.SerializerMethodField()
 
     class Meta:
@@ -48,10 +53,16 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
         return DiscountSerializer(objs, many=True).data
 
     def get_in_wishlist(self, obj):
-        user = self.context.get('view').request.user
+        user = self.context.get('request').user
         if not user.is_authenticated:
             return False
         return bool(obj.wishlist_items.filter(user=user))
+
+    # def get_wishlist_id(self, obj):
+    #     user = self.context.get('request').user
+    #     if not user.is_authenticated:
+    #         return None
+    #     return obj.wishlist_items.
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):
