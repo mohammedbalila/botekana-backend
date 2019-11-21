@@ -1,7 +1,10 @@
 from datetime import datetime
+import simplify
 
 from django.db import IntegrityError, transaction
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404, Http404
+from django.contrib.auth.models import AnonymousUser
 from django_filters import rest_framework
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, permissions, status, exceptions, filters
@@ -11,6 +14,13 @@ from . import models, serializers
 from .permissions import (IsUserOrReadOnly, IsUser,
                           IsOwner, IsOwnerOrAdminReadOnly,
                           IsUserOrAdminReadOnly)
+
+
+# QNB Simplify API keys.
+simplify.public_key = 'sbpb_NTUxYTAwNjctZjM4MS00YjQ1LWE1NjEtMWJhMjQ1ZjZiMDZh'
+simplify.private_key = (
+    'b/cr9oFaWMz1dnqqS6F107lOjiEuPxMxIdYrPRU9g2B5YFFQL0ODSXAOkNtXTToq'
+)
 
 
 class UserListView(generics.ListAPIView):
@@ -70,8 +80,16 @@ class WishlistEditView(generics.ListCreateAPIView):
 
     def delete(self, request, *args, **kwargs):
         try:
-            get_object_or_404(self.get_queryset(),
-                              pk=request.data['pk']).delete()
+            if kwargs.get("id"):
+                get_object_or_404(models.Product.objects.all(),
+                                  pk=request.data['pk']).wishlist_items\
+                    .get(user=kwargs.get("id"))\
+                    .delete()
+            else:
+                get_object_or_404(models.Product.objects.all(),
+                                  pk=request.data['pk']).wishlist_items\
+                    .get(user=request.user)\
+                    .delete()
             return Response({'success': True}, status.HTTP_200_OK)
         except Exception as e:
             return Response({'success': False, 'info': e.__str__()},
@@ -199,10 +217,24 @@ class CartFinishView(generics.views.APIView):
             cart = get_object_or_404(self.queryset, pk=kwargs['pk'])
             if not cart.is_active:
                 raise Exception("Cart already finished")
+
+            # Get the total price of the cart.
+            price = cart.items.aggregate(Sum('price'))['price__sum']
+            payment = simplify.Payment.create({
+                "token": request.data['token'],
+                "amount": price,
+                "currency": "QAR"
+            })
+            # Verify that the payment is done.
+            if payment.paymentStatus != 'APPROVED':
+                raise Exception('Payment not approved')
+
+            # Update cart.
             cart.date_finished = datetime.now()
             cart.is_active = False
             cart.save()
             return Response({'success': True}, status.HTTP_200_OK)
+
         except Exception as e:
             return Response({'success': False,
                              'details': e.__str__()},
