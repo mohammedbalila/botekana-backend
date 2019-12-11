@@ -1,5 +1,5 @@
 from datetime import datetime
-# import simplify
+import simplify
 
 from django.db import IntegrityError, transaction
 from django.db.models import Sum
@@ -16,11 +16,11 @@ from .permissions import (IsUserOrReadOnly, IsUser,
                           IsUserOrAdminReadOnly)
 
 
-# # QNB Simplify API keys.
-# simplify.public_key = 'sbpb_NTUxYTAwNjctZjM4MS00YjQ1LWE1NjEtMWJhMjQ1ZjZiMDZh'
-# simplify.private_key = (
-#     'b/cr9oFaWMz1dnqqS6F107lOjiEuPxMxIdYrPRU9g2B5YFFQL0ODSXAOkNtXTToq'
-# )
+# QNB Simplify API keys.
+simplify.public_key = 'sbpb_NTUxYTAwNjctZjM4MS00YjQ1LWE1NjEtMWJhMjQ1ZjZiMDZh'
+simplify.private_key = (
+    'b/cr9oFaWMz1dnqqS6F107lOjiEuPxMxIdYrPRU9g2B5YFFQL0ODSXAOkNtXTToq'
+)
 
 
 class UserListView(generics.ListAPIView):
@@ -204,15 +204,15 @@ class CartFinishView(generics.views.APIView):
                     product.save()
 
             # Get the total price of the cart.
-            # price = cart.items.aggregate(Sum('price'))['price__sum']
-            # payment = simplify.Payment.create({
-            #     "token": request.data['token'],
-            #     "amount": price,
-            #     "currency": "QAR"
-            # })
-            # # Verify that the payment is done.
-            # if payment.paymentStatus != 'APPROVED':
-            #     raise Exception('Payment not approved')
+            price = cart.items.aggregate(Sum('price'))['price__sum']
+            payment = simplify.Payment.create({
+                "token": request.data['token'],
+                "amount": price,
+                "currency": "QAR"
+            })
+            # Verify that the payment is done.
+            if payment.paymentStatus != 'APPROVED':
+                raise Exception('Payment not approved')
 
             # Update cart.
             cart.date_added = datetime.now()
