@@ -22,6 +22,13 @@ class Cart(models.Model):
     is_active = models.BooleanField(_("is active"), default=False)
     date_finished = models.DateTimeField(
         _("date finished"), blank=True, null=True)
+    name = models.CharField(
+        _("name"), max_length=100, blank=True, null=True)
+    phone = models.CharField(_("Phone Number"), max_length=20, unique=True,
+                             validators=[RegexValidator(r"^[+]*[(]{0,1}[0-9]"
+                                                        "{1,4}[)]{0,1}"
+                                                        "[-\s\./0-9]*$")],
+                             blank=True, null=True)
     country = models.CharField(
         _("country"), max_length=50, blank=True, null=True)
     city = models.CharField(_("city"), max_length=50, blank=True, null=True)
@@ -30,6 +37,10 @@ class Cart(models.Model):
     neighbourhood = models.CharField(
         _("neighbourhood"), max_length=50, blank=True, null=True)
     address = models.TextField(_("address"), blank=True, null=True)
+    second_address = models.TextField(
+        _("second address"), blank=True, null=True)
+    nearest_landmark = models.TextField(
+        _("nearest landmark"), blank=True, null=True)
     zip_code = models.PositiveIntegerField(
         _("zip code"), blank=True, null=True)
     payment_method = models.CharField(_("payment method"), max_length=2,

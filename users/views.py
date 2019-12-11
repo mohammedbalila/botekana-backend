@@ -202,9 +202,21 @@ class CartFinishView(generics.views.APIView):
                 # Save the new quantities.
                 for product in products:
                     product.save()
-                # Update cart.
-                cart.date_added = datetime.now()
-                cart.save()
+
+            # Get the total price of the cart.
+            # price = cart.items.aggregate(Sum('price'))['price__sum']
+            # payment = simplify.Payment.create({
+            #     "token": request.data['token'],
+            #     "amount": price,
+            #     "currency": "QAR"
+            # })
+            # # Verify that the payment is done.
+            # if payment.paymentStatus != 'APPROVED':
+            #     raise Exception('Payment not approved')
+
+            # Update cart.
+            cart.date_added = datetime.now()
+            cart.save()
 
             return Response({'success': True}, status.HTTP_200_OK)
         except Exception as e:
@@ -217,17 +229,6 @@ class CartFinishView(generics.views.APIView):
             cart = get_object_or_404(self.queryset, pk=kwargs['pk'])
             if not cart.is_active:
                 raise Exception("Cart already finished")
-
-            # Get the total price of the cart.
-            price = cart.items.aggregate(Sum('price'))['price__sum']
-            # payment = simplify.Payment.create({
-            #     "token": request.data['token'],
-            #     "amount": price,
-            #     "currency": "QAR"
-            # })
-            # # Verify that the payment is done.
-            # if payment.paymentStatus != 'APPROVED':
-            #     raise Exception('Payment not approved')
 
             # Update cart.
             cart.date_finished = datetime.now()
