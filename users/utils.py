@@ -10,8 +10,10 @@ from rest_framework_jwt.settings import api_settings
 
 
 def jwt_payload(user):
+    print(user)
     payload = {
-        'user_id': user.pk
+        'user_id': user.pk,
+        'username': user.username,
     }
 
     # Include original issued at time for a brand new token,
