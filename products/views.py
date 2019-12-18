@@ -4,7 +4,6 @@ from django_filters import rest_framework
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, permissions, status, filters
 from rest_framework.response import Response
-
 from . import serializers, models, filters as custom_filters
 
 
@@ -161,3 +160,32 @@ class DiscountEditView(generics.RetrieveUpdateDestroyAPIView):
     """
     serializer_class = serializers.DiscountSerializer
     queryset = models.Discount.objects.all()
+
+class ImageCreateView(generics.views.APIView):
+    """
+    post:
+        ### Create image and associate with product.
+    """
+    serializer_class = serializers.ImageSerializer
+    queryset = models.Image.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        try:
+            for image in request.FILES.values():
+                models.Image.objects.create(
+                    image=image, **kwargs)
+            return Response({'success': True}, status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'success': False, 'details': e.__str__()},
+                            status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+class ImageEditView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    delete:
+        ### Delete image.
+    """
+    serializer_class = serializers.ImageSerializer
+    queryset = models.Image.objects.all()
+
+    def get_object(self):
+        return models.Image.objects.get(**self.kwargs)

@@ -1,5 +1,5 @@
 import os
-
+from datetime import datetime
 from django.db import models
 from django.core.validators import RegexValidator
 from django.utils.translation import ugettext_lazy as _
@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 
 class Category(models.Model):
     name = models.CharField(_("name"), max_length=50)
-
+    name_ar = models.CharField(_("name in arabic"), max_length=50)
     class Meta:
         ordering = ['name']
         verbose_name = _("category")
@@ -19,7 +19,8 @@ class Category(models.Model):
 
 class SubCategory(models.Model):
     name = models.CharField(_("name"), max_length=50)
-
+    name_ar = models.CharField(_("name in arabic"), max_length=50)
+    categories = models.ManyToManyField(Category, related_name="sub_categories")
     class Meta:
         ordering = ['name']
         verbose_name = _("sub category")
@@ -31,7 +32,7 @@ class SubCategory(models.Model):
 
 class Brand(models.Model):
     name = models.CharField(_("name"), max_length=50)
-
+    name_ar = models.CharField(_("name in arabic"), max_length=50)
     class Meta:
         ordering = ['name']
         verbose_name = _("brand")
@@ -40,26 +41,13 @@ class Brand(models.Model):
         return self.name
 
 
-# class Size(models.Model):
-#     is_euro = models.BooleanField(_("European size"), default=False)
-#     size = models.PositiveSmallIntegerField(_("Size"))
-
-#     class Meta:
-#         ordering = ['size']
-
-    # def __str__(self):
-    #     return self.name
-
-
 def get_upload_path(instance, filename):
     try:
         return os.path.join("product_images/secondary_images/", "%s_%s" % (
             instance.product.name,
             filename))
     except:
-        return os.path.join("product_images/main_images/", "%s_%s" % (
-            instance.name,
-            filename))
+        return os.path.join("images/", "%s_%s" % (datetime.now(),filename))
 
 
 class Product(models.Model):
@@ -106,12 +94,24 @@ class Product(models.Model):
 
 class Image(models.Model):
     image = models.ImageField(_("image"), upload_to=get_upload_path)
-    product = models.ForeignKey(Product, models.CASCADE, related_name="images",
-                                related_query_name="images",
-                                verbose_name=_("product"))
+    product = models.ForeignKey("products.Product",  models.CASCADE,
+                                related_name='images',
+                                related_query_name='images',
+                                verbose_name=_("product"),
+                                blank=True, null=True)
+    category = models.ForeignKey("products.Category",  models.CASCADE,
+                                 related_name="image",
+                                 related_query_name="image",
+                                 verbose_name=_("category"),
+                                 blank=True, null=True)
+    sub_category = models.ForeignKey("products.SubCategory",  models.CASCADE,
+                                     related_name="image",
+                                     related_query_name="image",
+                                     verbose_name=_("sub category"),
+                                     blank=True, null=True)
 
     def __str__(self):
-        return "%s-%d" % (self.product.name, self.id)
+        return self.id
 
 
 class Discount(models.Model):

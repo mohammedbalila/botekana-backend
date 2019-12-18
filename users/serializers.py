@@ -138,23 +138,32 @@ class FeedbackSerializer(serializers.ModelSerializer):
         exclude = ['date_added']
 
 
+class UserPermissionsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserPermissions
+        fields = ['can_update_products', 'can_update_brands',
+                  'can_add_admins', 'can_remove_admins']
+
+
 class UserSerializer(serializers.ModelSerializer):
+    permissions = UserPermissionsSerializer()
 
     class Meta:
         model = models.User
         fields = ['id', 'username', 'first_name',
-                  'last_name', 'email', 'phone']
+                  'last_name', 'email', 'phone', 'is_staff', 'permissions']
 
 
 class UserRegisterSerializer(RegisterSerializer):
     first_name = serializers.CharField()
     last_name = serializers.CharField()
     phone = serializers.CharField()
+    permissions = UserPermissionsSerializer()
 
     class Meta:
         model = models.User
         fields = ['id', 'username', 'first_name',
-                  'last_name', 'email', 'phone']
+                  'last_name', 'email', 'phone', 'permissions']
 
     def get_cleaned_data(self):
         return {
@@ -164,8 +173,14 @@ class UserRegisterSerializer(RegisterSerializer):
             'first_name': self.validated_data.get('first_name', ''),
             'last_name': self.validated_data.get('last_name', ''),
             'phone': self.validated_data.get('phone', ''),
+            'permissions': self.validated_data.get('permissions', {})
         }
 
     def custom_signup(self, request, user):
         user.phone = self.validated_data.get('phone')
+        try:
+            models.UserPermissions.objects.create(
+                user=user, **self.validated_data.get('permissions'))
+        except:
+            pass
         user.save()

@@ -1,8 +1,11 @@
+import os
 from django.db import models
+from django.conf import settings
+from datetime import datetime
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.utils.translation import ugettext_lazy as _
-
+from django.db.models.signals import post_save
 from products.models import Product
 
 
@@ -12,6 +15,26 @@ class User(AbstractUser):
                                                         "{1,4}[)]{0,1}"
                                                         "[-\s\./0-9]*$")],
                              blank=True, null=True)
+    @property
+    def permissions(self):
+        try:
+            return self.permissions
+        except UserPermissions.DoesNotExist:
+            return UserPermissions.objects.create(user=self)
+
+class UserPermissions(models.Model):
+    user = models.OneToOneField(User,
+                                related_name="permissions",
+                                related_query_name="permissions",
+                                on_delete=models.CASCADE)
+    can_update_products = models.BooleanField(default=False)
+    can_update_brands = models.BooleanField(default=False)
+    can_add_admins = models.BooleanField(default=False)
+    can_remove_admins = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return "{}-{}".format(self.user.username, self.id)
+    
 
 
 class Cart(models.Model):
@@ -97,3 +120,15 @@ class Feedback(models.Model):
 
     def __str__(self):
         return self.content[:50]
+
+
+# Emits before after saving and create a permsissons set
+def user_post_save(sender, instance, created, *args, **kwargs):
+    if created:
+        try:
+            UserPermissions.objects.create(user=instance)
+        except:
+            pass
+
+
+# post_save.connect(user_post_save, settings.AUTH_USER_MODEL)

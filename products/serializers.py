@@ -13,7 +13,12 @@ class DiscountSerializer(serializers.ModelSerializer):
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Image
-        fields = ['image']
+        fields = ['image', 'product', 'category', 'sub_category']
+        extra_kwargs = { 
+            'product': { 'write_only': True },
+            'category': { 'write_only': True },
+            'sub_category': { 'write_only': True }
+            }
 
 
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
@@ -98,27 +103,27 @@ class BrandEditSerializer(serializers.ModelSerializer):
         model = models.Brand
         fields = '__all__'
 
-
 class SubCategorySerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
-
     class Meta:
         model = models.SubCategory
         fields = '__all__'
-
 
 class SubCategoryEditSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     products = ProductSerializer(many=True, read_only=True)
-
+    image = serializers.SerializerMethodField()
     class Meta:
         model = models.SubCategory
         fields = '__all__'
-
+    def get_image(self, obj: models.Category):
+        return ImageSerializer(obj.image.last(),
+                               context={
+                                   'request': self.context.get('request')
+        }).data['image']
 
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
-
     class Meta:
         model = models.Category
         fields = '__all__'
@@ -127,7 +132,12 @@ class CategorySerializer(serializers.HyperlinkedModelSerializer):
 class CategoryEditSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     products = ProductSerializer(many=True, read_only=True)
-
+    image = serializers.SerializerMethodField()
     class Meta:
         model = models.Category
         fields = '__all__'
+    def get_image(self, obj: models.Category):
+        return ImageSerializer(obj.image.last(),
+                               context={
+                                   'request': self.context.get('request')
+        }).data['image']

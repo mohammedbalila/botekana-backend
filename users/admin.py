@@ -5,4 +5,5 @@ from . import models
 
 admin.site.register([models.User, models.Feedback,
                      models.Cart, models.CartItem,
-                     models.WishlistItem])
+                     models.WishlistItem, models.UserPermissions
+                     ])
