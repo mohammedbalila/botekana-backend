@@ -30,3 +30,8 @@ class IsUserOrAdminReadOnly(permissions.BasePermission):
         if request.user.is_staff and obj != request.user:
             return request.method in permissions.SAFE_METHODS
         return obj == request.user
+
+
+class IsUserOrAdmin(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return request.user.is_staff or obj == request.user

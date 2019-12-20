@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from . import models, serializers
 from .permissions import (IsUserOrReadOnly, IsUser,
                           IsOwner, IsOwnerOrAdminReadOnly,
-                          IsUserOrAdminReadOnly)
+                          IsUserOrAdminReadOnly, IsUserOrAdmin)
 
 
 # # QNB Simplify API keys.
@@ -29,13 +29,14 @@ class UserListView(generics.ListAPIView):
         ### Retrieve list of users.
     """
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    filterset_fields = ['is_staff']
     search_fields = ['username', 'first_name', 'last_name', 'email', 'phone']
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_active=True)
 
 
 class UserEditView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsUserOrReadOnly]
+    permission_classes = [IsUserOrAdmin]
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
 

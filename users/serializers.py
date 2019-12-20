@@ -141,17 +141,31 @@ class FeedbackSerializer(serializers.ModelSerializer):
 class UserPermissionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserPermissions
-        fields = ['can_update_products', 'can_update_brands',
+        fields = ['id', 'can_update_products', 'can_update_brands',
                   'can_add_admins', 'can_remove_admins']
 
 
 class UserSerializer(serializers.ModelSerializer):
-    permissions = UserPermissionsSerializer()
+    permissions = UserPermissionsSerializer(read_only=False)
 
     class Meta:
         model = models.User
         fields = ['id', 'username', 'first_name',
                   'last_name', 'email', 'phone', 'is_staff', 'permissions']
+
+    def update(self, instance, validated_data: dict):
+        permissions = validated_data.pop('permissions')
+        instance_permissions = instance.permissions
+        # 01101352846
+        instance_permissions.can_update_products = permissions.get(
+            'can_update_products', instance_permissions.can_update_products)
+        instance_permissions.can_update_brands = permissions.get(
+            'can_update_brands', instance_permissions.can_update_brands)
+        instance_permissions.can_add_admins = permissions.get(
+            'can_add_admins', instance_permissions.can_add_admins)
+        instance_permissions.save()
+        instance.save()
+        return instance
 
 
 class UserRegisterSerializer(RegisterSerializer):
