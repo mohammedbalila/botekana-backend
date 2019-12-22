@@ -103,8 +103,7 @@ class BrandEditSerializer(serializers.ModelSerializer):
         model = models.Brand
         fields = '__all__'
 
-class SubCategorySerializer(serializers.HyperlinkedModelSerializer):
-    id = serializers.IntegerField(read_only=True)
+class SubCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.SubCategory
         fields = '__all__'
@@ -122,8 +121,7 @@ class SubCategoryEditSerializer(serializers.ModelSerializer):
                                    'request': self.context.get('request')
         }).data['image']
 
-class CategorySerializer(serializers.HyperlinkedModelSerializer):
-    id = serializers.IntegerField(read_only=True)
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Category
         fields = '__all__'
