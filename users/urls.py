@@ -20,4 +20,5 @@ urlpatterns = [
     path("wishlist/", views.WishlistEditView.as_view(), name="user-wishlist"),
     path("feedback/", views.FeedbackListView.as_view(),
          name="feedback-submit"),
+     path("misc/", views.MiscView.as_view())
 ]

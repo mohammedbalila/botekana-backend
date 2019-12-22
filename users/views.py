@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, Http404
 from django.contrib.auth.models import AnonymousUser
 from django_filters import rest_framework
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import generics, permissions, status, exceptions, filters
+from rest_framework import generics, permissions, status, exceptions, filters, views
 from rest_framework.response import Response
 
 from . import models, serializers
@@ -288,3 +288,11 @@ class FeedbackListView(generics.ListCreateAPIView):
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['message']
     filterset_fields = ['email', 'date_added']
+
+
+class MiscView(views.APIView):
+    def get(self, request):
+        users = models.User.objects.count()
+        carts = models.Cart.objects.count()
+        results = {'users': users, 'carts': carts}
+        return Response(results)

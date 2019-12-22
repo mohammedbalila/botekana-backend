@@ -15,12 +15,6 @@ class User(AbstractUser):
                                                         "{1,4}[)]{0,1}"
                                                         "[-\s\./0-9]*$")],
                              blank=True, null=True)
-    @property
-    def permissions(self):
-        try:
-            return self.permissions
-        except UserPermissions.DoesNotExist:
-            return UserPermissions.objects.create(user=self)
 
 class UserPermissions(models.Model):
     user = models.OneToOneField(User,
